@@ -6,6 +6,7 @@ import br.gov.bnb.cultura.siscultural3.repositories.AppUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +25,6 @@ public class UserService  {
 
     @Autowired
     PasswordEncoder passwordEncoder;
-
-
 
     public boolean isValid(String email) {
         AppUser user = new AppUser();
@@ -48,6 +47,15 @@ public class UserService  {
 
     public boolean owns(Authentication authentication, Proposta proposta) {
         return proposta.getProposer().getUsername().equals(authentication.getPrincipal());
+    }
+
+    public AppUser findByAppuserByUsername(String username) {
+        Optional one = findOne(username);
+        if (one.isPresent()) {
+            return (AppUser) one.get();
+        }
+
+        throw new UsernameNotFoundException("Usuário com identificação \"" + username + "\" não foi encontrado");
     }
 
     public void create(String username, String password) throws ExistentUserException {

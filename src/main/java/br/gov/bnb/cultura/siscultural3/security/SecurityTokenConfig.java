@@ -5,6 +5,7 @@ import br.gov.bnb.cultura.siscultural3.security.filters.JwtUsernameAndPasswordAu
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -36,16 +37,15 @@ public class SecurityTokenConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Autowired
+    private RepositoryRestConfiguration repositoryRestConfiguration;
+
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-
                 .csrf().disable()
                 .cors().and()
-
-
-
 
                 // make sure we use stateless session; session won't be used to store user's state.
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -74,6 +74,12 @@ public class SecurityTokenConfig extends WebSecurityConfigurerAdapter {
 
                 //allow signup rest method
                 .antMatchers(HttpMethod.POST, "/signup").permitAll()
+
+
+                // deny acess to Spring Data REST profile metadata pages
+//                .antMatchers(HttpMethod.GET,
+//						"/profile/**", "/**/search/**", "/")
+//					.denyAll()
 
                 // Any other request must be authenticated
                 .anyRequest().authenticated();

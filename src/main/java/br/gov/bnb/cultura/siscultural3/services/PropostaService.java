@@ -20,13 +20,21 @@ public class PropostaService {
     @Autowired
     AppUserRepository appUserRepository;
 
-    public Proposta save(RequestProposta proposta) {
+    @Autowired
+    private UserService userService;
+
+
+    public Proposta save(RequestProposta proposta, String username) {
 
         Proposta propostaASalvar = extractProposta(proposta);
 
         // testar usuário aqui e jogar exceções se for o caso
-        Optional<AppUser> byId = appUserRepository.findById(proposta.getProposer());
-        propostaASalvar.setProposer(byId.get());
+//        Optional<AppUser> byId = appUserRepository.findById(proposta.getProposer());
+//        propostaASalvar.setProposer(byId.get());
+
+        AppUser user = userService.findByAppuserByUsername(username);
+        propostaASalvar.setProposer(user);
+
 
         //        return propostaRepository.saveAndFlush(propostaASalvar);
         return propostaRepository.save(propostaASalvar);
