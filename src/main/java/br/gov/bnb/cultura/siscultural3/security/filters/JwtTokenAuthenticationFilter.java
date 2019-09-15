@@ -63,11 +63,15 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
                 @SuppressWarnings("unchecked")
                 List<String> authorities = (List<String>) claims.get("authorities");
 
+                List<SimpleGrantedAuthority> collectAuthorities = authorities.stream().map(s -> new SimpleGrantedAuthority("ROLE_" + s)).collect(Collectors.toList());
+
+
                 // 5. Create auth object
                 // UsernamePasswordAuthenticationToken: A built-in object, used by spring to represent the current authenticated / being authenticated user.
                 // It needs a list of authorities, which has type of GrantedAuthority interface, where SimpleGrantedAuthority is an implementation of that interface
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        username, null, authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
+//                        username, null, authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
+                        username, null, collectAuthorities );
 
                 // 6. Authenticate the user
                 // Now, user is authenticated

@@ -37,6 +37,8 @@ public class Proposta {
     private String historico;
     private String fichaTecnica;
 
+    private String chamada;
+
     @ElementCollection(fetch = FetchType.LAZY)
     private List<String> links;
 
@@ -47,7 +49,7 @@ public class Proposta {
     private String emailContato;
 
     @ManyToOne
-//    @JsonIgnore
+    @JsonIgnore
     private AppUser proposer;
 
     public Proposta() {
@@ -187,5 +189,13 @@ public class Proposta {
 
     public void setProposer(AppUser proposer) {
         this.proposer = proposer;
+    }
+
+    public String getChamada() {
+        return chamada;
+    }
+
+    public void setChamada(String chamada) {
+        this.chamada = chamada;
     }
 }

@@ -13,7 +13,8 @@ public class RequestProposta {
 
     private Long id;
 
-    private Integer tipoProposta;
+//    private Integer tipoProposta;
+    private String tipoProposta;
 
     private boolean ccbnbSousa;
     private boolean ccbnbCariri;

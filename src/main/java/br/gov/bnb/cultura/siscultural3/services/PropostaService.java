@@ -7,12 +7,29 @@ import br.gov.bnb.cultura.siscultural3.entities.TipoProposta;
 import br.gov.bnb.cultura.siscultural3.repositories.AppUserRepository;
 import br.gov.bnb.cultura.siscultural3.repositories.PropostaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class PropostaService {
+
+    @Value("${LIMIT_DATETIME}")
+    private String dateLimit;
+
+    @Value("${DEFAULT_CHAMADA}")
+    private String defaultChamada;
 
     @Autowired
     PropostaRepository propostaRepository;
@@ -24,51 +41,104 @@ public class PropostaService {
     private UserService userService;
 
 
-    public Proposta save(RequestProposta proposta, String username) {
+    private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
-        Proposta propostaASalvar = extractProposta(proposta);
+    public boolean isLocked() {
 
-        // testar usuário aqui e jogar exceções se for o caso
-//        Optional<AppUser> byId = appUserRepository.findById(proposta.getProposer());
-//        propostaASalvar.setProposer(byId.get());
+        ZonedDateTime limit = ZonedDateTime.parse(dateLimit, dateTimeFormatter.withZone(ZoneId.of("-3")));
+        ZonedDateTime now = ZonedDateTime.now();
 
-        AppUser user = userService.findByAppuserByUsername(username);
-        propostaASalvar.setProposer(user);
+        boolean result = now.isAfter(limit);
 
+        return result;
 
-        //        return propostaRepository.saveAndFlush(propostaASalvar);
-        return propostaRepository.save(propostaASalvar);
     }
 
-    public Proposta update(RequestProposta proposta) {
+    public List<Proposta> getPropostasbyProposer(Authentication authentication) {
 
-        Optional<Proposta> byId = propostaRepository.findById(proposta.getId());
+        return propostaRepository.findAllByProposerUsernameAndChamadaOrderByIdDesc("natarajan4@gmail.com", defaultChamada);
 
-//        byId.ifPresent(propostaOriginal -> {
-//            Proposta propostaRecebida = extractProposta(proposta);
-//            propostaRecebida.setId(propostaOriginal.getId());
-//            propostaRecebida.setProposer(propostaOriginal.getProposer());
-//
-//            propostaRepository.save(propostaRecebida);
-//        });
-        if (byId.isPresent()) {
+    }
 
-            Proposta propostaOriginal = byId.get();
 
-            Proposta propostaRecebida = extractProposta(proposta);
-            propostaRecebida.setId(propostaOriginal.getId());
-            propostaRecebida.setProposer(propostaOriginal.getProposer());
+    public Proposta save(RequestProposta proposta, String username) throws LimitDateException {
 
-            return propostaRepository.save(propostaRecebida);
+        if (isLocked())
+            throw new LimitDateException();
+
+        Proposta propostaASalvar = extractProposta(proposta);
+        propostaASalvar.setChamada(defaultChamada);
+
+        try {
+
+            AppUser user = userService.findByAppuserByUsername(username);
+            propostaASalvar.setProposer(user);
+            return propostaRepository.save(propostaASalvar);
+
+        } catch (UsernameNotFoundException e) {
+
         }
 
         return null;
 
     }
 
+    public Proposta update(RequestProposta proposta, Authentication authentication) throws LimitDateException, PropostaAuthorizationException {
+
+        if (isLocked())
+            throw new LimitDateException();
+
+        Optional<Proposta> byId = propostaRepository.findById(proposta.getId());
+
+        if (byId.isPresent()) {
+
+            Proposta propostaOriginal = byId.get();
+
+            if (!propostaOriginal.getProposer().getUsername().equals(authentication.getName()))
+                throw new PropostaAuthorizationException("Erro de autenticação do proponente da proposta.");
+
+            Proposta propostaRecebida = extractProposta(proposta);
+            propostaRecebida.setId(propostaOriginal.getId());
+            propostaRecebida.setProposer(propostaOriginal.getProposer());
+            propostaRecebida.setChamada(defaultChamada);
+
+            Proposta save = propostaRepository.save(propostaRecebida);
+            return save;
+        }
+
+        return null;
+
+    }
+
+    public void delete(Long idProposta, Authentication authentication) throws LimitDateException, PropostaAuthorizationException {
+
+        if (isLocked())
+            throw new LimitDateException();
+
+        Optional<Proposta> byId = propostaRepository.findById(idProposta);
+
+        if (!byId.isPresent()) {
+
+            Proposta propostaOriginal = byId.get();
+
+            if (!propostaOriginal.getProposer().getUsername().equals(authentication.getName()))
+                throw new PropostaAuthorizationException("Erro de autenticação do proponente da proposta.");
+
+            propostaRepository.delete(propostaOriginal);
+
+        }
+
+
+
+    }
+
     private static Proposta extractProposta(RequestProposta proposta) {
         Proposta propostaASalvar = new Proposta();
-        propostaASalvar.setTipoProposta(TipoProposta.parse(proposta.getTipoProposta()));
+//        propostaASalvar.setTipoProposta(TipoProposta.parse(proposta.getTipoProposta()));
+
+        if (proposta.getId() != null)
+            propostaASalvar.setId(proposta.getId());
+        propostaASalvar.setTipoProposta(TipoProposta.valueOf(proposta.getTipoProposta()));
         propostaASalvar.setCcbnbSousa(proposta.isCcbnbSousa());
         propostaASalvar.setCcbnbCariri(proposta.isCcbnbCariri());
         propostaASalvar.setCcbnbFortaleza(proposta.isCcbnbFortaleza());
