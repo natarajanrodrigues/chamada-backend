@@ -25,10 +25,10 @@ import java.util.Optional;
 @Service
 public class PropostaService {
 
-    @Value("${LIMIT_DATETIME}")
+    @Value("${APP_LIMIT_DATETIME}")
     private String dateLimit;
 
-    @Value("${DEFAULT_CHAMADA}")
+    @Value("${APP_DEFAULT_CHAMADA}")
     private String defaultChamada;
 
     @Autowired
