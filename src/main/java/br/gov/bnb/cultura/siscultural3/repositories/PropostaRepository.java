@@ -10,9 +10,11 @@ import org.springframework.security.access.prepost.PreFilter;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.UUID;
 
 
-public interface PropostaRepository extends CrudRepository<Proposta, Long> {
+//public interface PropostaRepository extends CrudRepository<Proposta, Long> {
+public interface PropostaRepository extends CrudRepository<Proposta, UUID> {
 
 
     List<Proposta> findAllByProposerId(@RequestParam(name = "id", required = true) Integer id );

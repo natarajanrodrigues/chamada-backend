@@ -5,13 +5,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @Getter
 @Setter
 public class RequestProposta {
 
-    private Long id;
+//    private Long id;
+    private UUID id;
 
 //    private Integer tipoProposta;
     private String tipoProposta;

@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
 
 @Entity
@@ -15,9 +16,13 @@ import java.util.List;
 //@NoArgsConstructor
 public class Proposta {
 
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.AUTO)
+//    private Long id;
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private UUID id;
 
     @Enumerated
     private TipoProposta tipoProposta;
@@ -33,8 +38,13 @@ public class Proposta {
     private String estado;
     private String cidade;
 
+    @Column(columnDefinition = "TEXT")
     private String descricao;
+
+    @Column(columnDefinition = "TEXT")
     private String historico;
+
+    @Column(columnDefinition = "TEXT")
     private String fichaTecnica;
 
     private String chamada;
@@ -55,11 +65,20 @@ public class Proposta {
     public Proposta() {
     }
 
-    public Long getId() {
+//    public Long getId() {
+//        return id;
+//    }
+//
+//    public void setId(Long id) {
+//        this.id = id;
+//    }
+
+
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

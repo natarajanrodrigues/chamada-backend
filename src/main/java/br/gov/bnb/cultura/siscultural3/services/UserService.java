@@ -3,8 +3,10 @@ package br.gov.bnb.cultura.siscultural3.services;
 import br.gov.bnb.cultura.siscultural3.entities.AppUser;
 import br.gov.bnb.cultura.siscultural3.entities.Proposta;
 import br.gov.bnb.cultura.siscultural3.repositories.AppUserRepository;
+import br.gov.bnb.cultura.siscultural3.repositories.PropostaView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,6 +48,15 @@ public class UserService  {
     }
 
     public boolean owns(Authentication authentication, Proposta proposta) {
+        return proposta.getProposer().getUsername().equals(authentication.getPrincipal());
+    }
+
+    public boolean owns(Authentication authentication, PropostaView proposta) {
+        return proposta.getProposer().getUsername().equals(authentication.getPrincipal());
+    }
+
+    public boolean ownsWithResponse(Authentication authentication, ResponseEntity responseEntity) {
+        Proposta proposta = (Proposta) responseEntity.getBody();
         return proposta.getProposer().getUsername().equals(authentication.getPrincipal());
     }
 

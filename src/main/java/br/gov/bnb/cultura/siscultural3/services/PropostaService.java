@@ -6,6 +6,8 @@ import br.gov.bnb.cultura.siscultural3.entities.Proposta;
 import br.gov.bnb.cultura.siscultural3.entities.TipoProposta;
 import br.gov.bnb.cultura.siscultural3.repositories.AppUserRepository;
 import br.gov.bnb.cultura.siscultural3.repositories.PropostaRepository;
+import br.gov.bnb.cultura.siscultural3.repositories.PropostaView;
+import br.gov.bnb.cultura.siscultural3.repositories.PropostaViewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -21,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PropostaService {
@@ -40,6 +43,9 @@ public class PropostaService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    PropostaViewRepository propostaViewRepository;
+
 
     private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
@@ -56,10 +62,16 @@ public class PropostaService {
 
     public List<Proposta> getPropostasbyProposer(Authentication authentication) {
 
-        return propostaRepository.findAllByProposerUsernameAndChamadaOrderByIdDesc("natarajan4@gmail.com", defaultChamada);
+        return propostaRepository.findAllByProposerUsernameAndChamadaOrderByIdDesc((String) authentication.getPrincipal(), defaultChamada);
 
     }
 
+    public List<PropostaView> getPropostaViewbyProposer(Authentication authentication) {
+
+        String username = (String) authentication.getPrincipal();
+        return propostaViewRepository.findAllByProposerUsernameAndChamadaOrderByIdDesc(username, defaultChamada);
+
+    }
 
     public Proposta save(RequestProposta proposta, String username) throws LimitDateException {
 
@@ -88,6 +100,7 @@ public class PropostaService {
         if (isLocked())
             throw new LimitDateException();
 
+//        Optional<Proposta> byId = propostaRepository.findById(proposta.getId());
         Optional<Proposta> byId = propostaRepository.findById(proposta.getId());
 
         if (byId.isPresent()) {
@@ -110,7 +123,8 @@ public class PropostaService {
 
     }
 
-    public void delete(Long idProposta, Authentication authentication) throws LimitDateException, PropostaAuthorizationException {
+//    public void delete(Long idProposta, Authentication authentication) throws LimitDateException, PropostaAuthorizationException {
+    public void delete(UUID idProposta, Authentication authentication) throws LimitDateException, PropostaAuthorizationException {
 
         if (isLocked())
             throw new LimitDateException();
@@ -128,7 +142,25 @@ public class PropostaService {
 
         }
 
+    }
 
+    public Proposta getProposta(UUID id, Authentication authentication) throws PropostaAuthorizationException {
+
+        System.out.println(id);
+        Optional<Proposta> byId = propostaRepository.findById(id);
+
+        if (byId.isPresent()) {
+            Proposta proposta = byId.get();
+            boolean owns = userService.owns(authentication, proposta);
+
+            if (owns)
+                return proposta;
+            else
+                throw new PropostaAuthorizationException("Não permitido");
+
+        }
+
+        return null;
 
     }
 
@@ -137,6 +169,7 @@ public class PropostaService {
 //        propostaASalvar.setTipoProposta(TipoProposta.parse(proposta.getTipoProposta()));
 
         if (proposta.getId() != null)
+//            propostaASalvar.setId(proposta.getId());
             propostaASalvar.setId(proposta.getId());
         propostaASalvar.setTipoProposta(TipoProposta.valueOf(proposta.getTipoProposta()));
         propostaASalvar.setCcbnbSousa(proposta.isCcbnbSousa());
